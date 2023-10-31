@@ -1,0 +1,34 @@
+.messages {
+  flex: 1;
+  padding: 10px 0;
+  .message {
+    display: flex;
+    align-items: flex-start;
+    padding: 4px;
+    &.user {
+      flex-direction: row-reverse;
+      .img {
+        margin-left: 4px;
+        margin-right: 0;
+      }
+      .text {
+        background-color: rgb(149 236 105);
+      }
+    }
+    .img {
+      margin-right: 4px;
+      font-size: 36px;
+      background-color: #a7c7f4;
+      color: white;
+      border-radius: 4px;
+      width: 36px;
+    }
+    .text {
+      background-color: rgb(244, 242, 242);
+      padding: 6px;
+      border-radius: 4px;
+      max-width: 60%;
+      word-wrap: break-word;
+    }
+  }
+}
