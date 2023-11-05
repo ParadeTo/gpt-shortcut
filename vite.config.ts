@@ -22,6 +22,15 @@ export default defineConfig({
     react(),
     crx({
       manifest,
+      contentScripts: {
+        injectCss: false,
+      },
     }),
   ],
+  build: {
+    rollupOptions: {
+      input: ['index.html'],
+    },
+    manifest: true,
+  },
 })
