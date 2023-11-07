@@ -8,7 +8,9 @@ const manifest = defineManifest({
   name: 'gpt-shortcut',
   version: '1.0.0',
   action: {default_icon: 'src/assets/logo.png'},
-  content_scripts: [{js: ['src/content/index.tsx'], matches: ['https://*/*']}],
+  content_scripts: [
+    {js: ['src/content/index.tsx'], matches: ['https://*/*', 'http://*/*']},
+  ],
   background: {
     service_worker: 'src/background/index.ts',
     type: 'module',
