@@ -1,3 +1,4 @@
+import {ChatGPTBot} from '@/chatgpt'
 import {v4 as uuid} from 'uuid'
 interface Paragraph {
   id: string
@@ -139,4 +140,11 @@ class ParallelTranslate {
   }
 }
 
-new ParallelTranslate().translate()
+// new ParallelTranslate().translate()
+const chatgpt = new ChatGPTBot()
+chatgpt.sendMessage({
+  prompt: 'hello',
+  onEvent(args) {
+    console.log(args)
+  },
+})
