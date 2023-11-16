@@ -3,6 +3,8 @@ import {useEffect} from 'react'
 
 export enum MessageType {
   proxyReady,
+  updateAnswer,
+  done,
 }
 
 const chatgpt = new ChatGPTBot()
@@ -15,7 +17,7 @@ export const Proxy = () => {
         chatgpt.sendMessage({
           prompt,
           onEvent(event) {
-            window.postMessage(event, '*')
+            window.parent.postMessage(event, '*')
           },
         })
       }

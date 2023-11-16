@@ -127,6 +127,7 @@ export class ChatGPTBot {
     )
 
     this.parseSSEResponse(rsp, (message) => {
+      console.log('msg', message)
       if (message === '[DONE]') {
         params.onEvent({type: 'done'})
         return
