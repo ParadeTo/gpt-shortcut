@@ -2,9 +2,9 @@ import {ChatGPTBot} from '@/chatgpt'
 import {useEffect} from 'react'
 
 export enum MessageType {
-  proxyReady,
-  updateAnswer,
-  done,
+  proxyReady = 'proxyReady',
+  updateAnswer = 'updateAnswer',
+  done = 'done',
 }
 
 const chatgpt = new ChatGPTBot()

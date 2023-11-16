@@ -1,5 +1,6 @@
 import {MessageType} from '@/pages/proxy'
 import {v4 as uuid} from 'uuid'
+import {throttle} from 'lodash-es'
 
 interface Paragraph {
   id: string
@@ -20,6 +21,22 @@ export class ParallelTranslate {
   injectStyleEl = 'inject-style-el'
   loadingClass = 'loading-class'
   translationClass = 'translation-class'
+  intersectionObserverParagraphList: Paragraph[] = []
+  intersectionObserverThrottleCall = throttle(
+    () => {
+      this.translateParagraphs(this.intersectionObserverParagraphList),
+        (this.intersectionObserverParagraphList = [])
+    },
+    500,
+    {
+      trailing: !0,
+    }
+  )
+  $proxyIframe: HTMLIFrameElement | null = null
+
+  constructor($proxyIframe: HTMLIFrameElement) {
+    this.$proxyIframe = $proxyIframe
+  }
 
   createTranslatableNodeWrapper(textNode: Text) {
     const translatableEl = document.createElement(this.toBeTranslateTag)
@@ -166,26 +183,73 @@ export class ParallelTranslate {
     document.head.appendChild(style)
   }
 
-  async translate($proxyIframe: HTMLIFrameElement) {
-    this.insertCSS()
-    this.markExclude()
-    const textNodes = this.findTextNodes()
-    const paragraphs = this.createParagraphs(textNodes)
+  async processParagraphsIsInViewport(paragraphs: Paragraph[]) {
+    const inViewportParagraphs: Paragraph[] = []
+    const outViewportParagraphs: Paragraph[] = []
+    return (
+      await Promise.all(
+        paragraphs.map(async (s) => {
+          ;(await this.checkElIsInViewport(s.commonAncestorEl))
+            ? inViewportParagraphs.push(s)
+            : outViewportParagraphs.push(s)
+        })
+      ),
+      {
+        inViewportParagraphs,
+        outViewportParagraphs,
+      }
+    )
+  }
 
+  checkElIsInViewport(e: HTMLElement) {
+    return new Promise((r) => {
+      new IntersectionObserver((n, i) => {
+        let a = n.some((s) =>
+          s.intersectionRatio > 0 ? (i.disconnect(), !0) : !1
+        )
+        r(a)
+      }).observe(e)
+    })
+  }
+
+  addIntersectionObserver(e: Paragraph[]) {
+    e.forEach((r) => {
+      let n = new IntersectionObserver((i, a) => {
+        i.some((o) => (o.intersectionRatio > 0 ? (a.disconnect(), !0) : !1)) &&
+          (this.intersectionObserverParagraphList.push(r),
+          this.intersectionObserverThrottleCall())
+      })
+      n.observe(r.commonAncestorEl)
+    })
+  }
+
+  async translateParagraphs(paragraphs: Paragraph[]) {
+    this.insertCSS()
     const texts: string[] = []
     paragraphs.forEach(
       ({commonAncestorEl, text, translationWrapperEl, translationEl}) => {
         commonAncestorEl.appendChild(translationEl)
-        texts.push(text)
+        texts.push(text.trim())
       }
     )
-
-    const results = await this.requestAI(texts, $proxyIframe)
+    debugger
+    const results = await this.requestAI(texts)
+    debugger
     paragraphs.forEach(({translationEl}, index) => {
       translationEl.innerText = results[index]
       translationEl.classList.remove(this.loadingClass)
       translationEl.classList.add(this.translationClass)
     })
+  }
+
+  async translate($proxyIframe: HTMLIFrameElement) {
+    this.markExclude()
+    const textNodes = this.findTextNodes()
+    const paragraphs = this.createParagraphs(textNodes)
+    const {inViewportParagraphs, outViewportParagraphs} =
+      await this.processParagraphsIsInViewport(paragraphs)
+    this.translateParagraphs(inViewportParagraphs)
+    this.addIntersectionObserver(outViewportParagraphs)
   }
 
   parseJson(answer: string) {
@@ -194,10 +258,7 @@ export class ParallelTranslate {
     return JSON.parse(jsonStr)
   }
 
-  requestAI(
-    texts: string[],
-    $proxyIframe: HTMLIFrameElement
-  ): Promise<string[]> {
+  requestAI(texts: string[]): Promise<string[]> {
     return new Promise((resolve, reject) => {
       const from = 'Chinese'
       const to = 'English'
@@ -205,10 +266,8 @@ export class ParallelTranslate {
       window.addEventListener('message', (ev) => {
         const msg = ev.data
         console.debug('msg:', msg)
-        if (msg.target !== 'parallelTranslate') return
-
         if (msg.event === MessageType.updateAnswer) {
-          answer = msg.message
+          answer = msg.data.text
         } else if (msg.event === MessageType.done) {
           try {
             const result = this.parseJson(answer)
@@ -220,7 +279,7 @@ export class ParallelTranslate {
           reject()
         }
       })
-      $proxyIframe.contentWindow?.postMessage(
+      this.$proxyIframe?.contentWindow?.postMessage(
         {
           prompt: `I will give you a JSON array, please translate each item from ${from} to ${to} and return a JSON array whose items are translation result string, please return the JSON directly, here is my JSON array:
           ${JSON.stringify(texts)}`,

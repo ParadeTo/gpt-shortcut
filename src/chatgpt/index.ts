@@ -12,7 +12,7 @@ import {createParser} from 'eventsource-parser'
 // }
 
 interface OnEventParams {
-  type: 'updateAnswer' | 'done'
+  event: 'updateAnswer' | 'done'
   data?: any
 }
 
@@ -129,7 +129,7 @@ export class ChatGPTBot {
     this.parseSSEResponse(rsp, (message) => {
       console.log('msg', message)
       if (message === '[DONE]') {
-        params.onEvent({type: 'done'})
+        params.onEvent({event: 'done'})
         return
       }
       let data
@@ -154,7 +154,7 @@ export class ChatGPTBot {
       }
       if (text) {
         params.onEvent({
-          type: 'updateAnswer',
+          event: 'updateAnswer',
           data: {text},
         })
       }

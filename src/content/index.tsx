@@ -3,8 +3,6 @@ import {MessageType} from '@/pages/proxy'
 import Browser from 'webextension-polyfill'
 import {ParallelTranslate} from './ParallelTranslate'
 
-const parallelTranslate = new ParallelTranslate()
-
 function insertProxy() {
   const container = document.createElement('div')
   const shadow = container.attachShadow({mode: 'open'})
@@ -22,6 +20,7 @@ const $proxyIframe = insertProxy()
 
 window.addEventListener('message', (e) => {
   if (e.data.event === MessageType.proxyReady) {
+    const parallelTranslate = new ParallelTranslate($proxyIframe)
     parallelTranslate.translate($proxyIframe)
   }
 })
