@@ -1,4 +1,3 @@
-import {ChatGPTBot} from '@/chatgpt'
 import {MessageType} from '@/pages/proxy'
 import Browser from 'webextension-polyfill'
 import {ParallelTranslate} from './ParallelTranslate'

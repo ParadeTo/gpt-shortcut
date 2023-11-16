@@ -232,9 +232,7 @@ export class ParallelTranslate {
         texts.push(text.trim())
       }
     )
-    debugger
     const results = await this.requestAI(texts)
-    debugger
     paragraphs.forEach(({translationEl}, index) => {
       translationEl.innerText = results[index]
       translationEl.classList.remove(this.loadingClass)
